@@ -5,6 +5,7 @@ from scapy.all import AsyncSniffer, Dot11, ls, Raw, IP, TCP, getmacbyip
 import subprocess, shlex
 from arena_helpers import *
 import time
+from algoritms import *
 
 def end_program_callback(scene: Scene):
     # print("cancelling")
@@ -76,40 +77,7 @@ class Globals():
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback)
 # Globals.selectedMac = dev_mac
 #Size of sphere should be proportional to number of packets
-def visualizePacket(originMac: str, destMac: str):
-  #nextTimes is a dictionary from the mac address tuple to the next time a packet can be visualized
-  #numberOfPackets is a dictionary from the mac address tuple to the number of packets that will be visualized
-  if not originMac in Globals.macMarkers.keys() or not destMac in Globals.macMarkers.keys():
-    return
-  tupleKey = (originMac, destMac)
-  if not tupleKey in visualizePacket.numberOfPackets.keys():
-    visualizePacket.numberOfPackets[tupleKey] = 1
-  if tupleKey in visualizePacket.nextTimes.keys() and time.time() < visualizePacket.nextTimes[tupleKey]:
-    visualizePacket.numberOfPackets[tupleKey] += 1
-    return
-  startLocation = Globals.macMarkers[originMac].data.position
-  endLocation = Globals.macMarkers[destMac].data.position
-  if startLocation.distance_to(endLocation) < 0.1:
-    visualizePacket.numberOfPackets[tupleKey] += 1
-    return
-  animationDuration = max(startLocation.distance_to(endLocation) * 2000, 2000)
-  visualizePacket.nextTimes[tupleKey] = time.time() + 0.5
-  print("Packets:", visualizePacket.numberOfPackets[tupleKey])
-  numPackets = visualizePacket.numberOfPackets[tupleKey]
-  packetObject = makePacketArrow(startLocation, difference(endLocation, startLocation), (255, 0, 0), animationDuration / 2000, f"{numPackets} pkts", Globals.scene)
-  packetObject.dispatch_animation(
-    Animation(
-      property="position",
-      start=startLocation,
-      end=endLocation,
-      easing="linear",
-      duration=animationDuration
-    )
-  )
-  Globals.scene.run_animations(packetObject)
-  visualizePacket.numberOfPackets[tupleKey] = 0
-visualizePacket.nextTimes: dict[Tuple[str, str], float] = {}
-visualizePacket.numberOfPackets: dict[Tuple[str, str], int] = {}
+
 
 packetsProcessed = 0
 def processPacket(pkt):
@@ -169,7 +137,7 @@ def processPacket(pkt):
       # return
     Globals.grids[pkt.addr2] = Grid(*spaceDimentions)
   Globals.grids[pkt.addr2].addReading(reading)
-  visualizePacket(pkt.addr2, pkt.addr1)
+  visualizePacket(pkt.addr2, pkt.addr1, Globals.macMarkers, Globals.scene)
 
 # @Globals.scene.run_forever(interval_ms=5000)
 def reloadEstimates():

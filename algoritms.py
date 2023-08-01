@@ -1,7 +1,7 @@
 import numpy as np
 from time import time
 from typing import Tuple
-
+from scipy.spatial.transform import Rotation as R
 #set camera as parent
 
 Vector = Tuple[float, float, float]
@@ -17,7 +17,9 @@ def subtract(a: Vector, b: Vector):
   return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
 
 def rotationToYRotation(rotation: Rotation):
-  return np.arctan2(2 * (rotation[0] * rotation[3] + rotation[1] * rotation[2]), 1 - 2 * (rotation[2]**2 + rotation[3]**2))
+  rot = R.from_quat(rotation)
+  vec = rot.apply((0, 0, -1))
+  return np.arctan2(vec[2], vec[0])
 
 def generateCoefficients(
     line: Tuple[Vector, Vector]
@@ -85,3 +87,7 @@ def getUnsampledRegions(radianRotations: list[float], bins: int) -> float:
         break
     if currentRegion > maxRegion:
       maxRegion = currentRegion
+
+print(rotationToYRotation((0, 0.4794255, 0, 0.8775826)))
+
+print(np.arctan2(1,0))
