@@ -6,15 +6,19 @@ import subprocess, shlex
 from arena_helpers import *
 import time
 
+Rotation = Tuple[float, float, float, float]
+Vector = Tuple[float, float, float]
+Reading = Tuple[Vector, Rotation, float]
+
 def end_program_callback(scene: Scene):
     # print("cancelling")
     ids = list(Globals.scene.all_objects.values())
     for obj in ids:
       print(obj)
       Globals.scene.delete_object(obj)
-# type Reading = Tuple[Tuple(float, float, float), Tuple(float, float, float, float), float]
+
 class GridSpace():
-  def __init__(self, center, readings=[]):
+  def __init__(self, center, readings: list[Reading]=[]):
     self.center = center
     self.readings = readings
     self.total = 0
@@ -22,18 +26,18 @@ class GridSpace():
       # print(reading)
       self.total += reading[2]
     self.average = self.total / len(readings)
-  def addReading(self, reading):
+  def addReading(self, reading: Reading):
     self.total += reading[2]
     self.readings.append(reading)
     self.average = self.total / len(self.readings)
 class Grid():
-  def __init__(self, xWidth, yWidth, zWidth, center=(0, 0, 0)) -> None:
+  def __init__(self, xWidth: float, yWidth: float, zWidth: float, center=(0, 0, 0)) -> None:
     self.origin = (center[0] - xWidth / 2, center[1] - yWidth / 2, center[2] - zWidth / 2)
     self.spaces = {}
     self.xWidth = xWidth
     self.yWidth = yWidth
     self.zWidth = zWidth
-  def addReading(self, reading):
+  def addReading(self, reading: Reading):
     position = reading[0]
     xOffset = position[0] - self.origin[0]
     yOffset = position[1] - self.origin[1]
@@ -46,7 +50,7 @@ class Grid():
       centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
       centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
       self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), [reading])
-  def addReadings(self, readings):
+  def addReadings(self, readings: list[Readings]):
     for reading in readings:
       self.addReading(reading)
 
@@ -63,15 +67,15 @@ iphone = "b8:7b:c5:00:6e:89"
 validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
 validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
-channel_n = 44  # Channel to listen on
+channel_n = 48  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of mac address text marking the device in the scene
-  macMarkers: dict[str: Grid] = {}
+  macMarkers: dict[str: Object] = {}
   #dictionary of positions to the selected device's signal grid
-  spaceMarkers: dict[Tuple[float, float, float]: Object] = {}
+  spaceMarkers: dict[Vector: Object] = {}
   #dictionary of all rssi readings, mapping the mac address of the grid of the readings 
-  grids = {}
+  grids: dict[str: Grid] = {}
   selectedMac = None
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback)
 # Globals.selectedMac = dev_mac
@@ -114,41 +118,12 @@ visualizePacket.numberOfPackets: dict[Tuple[str, str], int] = {}
 packetsProcessed = 0
 def processPacket(pkt):
   global packetsProcessed
-  # ls(pkt)
-  # print("hi:", pkt)
-  # if TCP in pkt:
-  #     tcp_sport=pkt[TCP].sport
-  #     tcp_dport=pkt[TCP].dport
-  #     print(tcp_sport, tcp_dport)
-  # if IP in pkt:
-  #   ip_src=pkt[IP].src
-  #   print(ip_src)
-  #   ip_dst=pkt[IP].dst
-  #   if ip_src == "192.168.40.24":
-  #     print("DST:", ip_dst)
   if not pkt.haslayer(Dot11):
     return
   if pkt.addr2 == None:
     return
   if pkt.addr2 not in validMacs:
     return
-  # if pkt.dBm_AntSignal < -40:
-  #   return
-  # print(pkt.addr2)
-  # if pkt.addr2 != dev_mac:
-  #   if pkt.addr2 == "5c:e9:1e:88:71:b1":
-  #     print("Other:", pkt.addr1)
-  #   # print("BOOM: ", Raw(pkt).load)
-  #   # print(pkt.payload)
-  #   # print(pkt.payload.payload.payload)
-  #   return
-  # print(pkt.addr1)
-  # ls(pkt)
-  # print(pkt.addr1)
-  # if pkt.addr2 != "e4:5f:01:d3:40:c6" and pkt.addr2 != "b4:b0:24:17:d1:7e":
-  #   return
-  # print(pkt.addr2)
-  # print(pkt.addr2, pkt.dBm_AntSignal)
   user = None
   for k, v in Globals.scene.users.items():
      if v.displayName == mainUsername:
@@ -186,7 +161,7 @@ def getColor(min, max, signal):
     ratio = (signal - min) / (max - min)
   return Color(int(255*(1 - ratio)), int(255*ratio), 0)
 
-def clearGrid(mac):
+def clearGrid(mac: str):
   for obj in Globals.spaceMarkers.values():
     # print(obj)
     # Globals.scene.delete_object(obj)
@@ -227,7 +202,7 @@ def reloadGrid():
       Globals.scene.update_object(marker)
   return
 
-async def changeSelectedMac(newMac):
+async def changeSelectedMac(newMac: str):
   if Globals.selectedMac != None:
     clearGrid(Globals.selectedMac)
   if Globals.selectedMac != newMac:
@@ -236,7 +211,7 @@ async def changeSelectedMac(newMac):
   else:
     Globals.selectedMac = None
 
-def getEstimate(grid):
+def getEstimate(grid: Grid):
   bestSignal = -500
   bestLocation = (0, 0)
   for space in grid.spaces.values():
