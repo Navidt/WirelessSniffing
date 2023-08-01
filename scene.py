@@ -50,7 +50,7 @@ class Grid():
       centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
       centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
       self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), [reading])
-  def addReadings(self, readings: list[Readings]):
+  def addReadings(self, readings: list[Reading]):
     for reading in readings:
       self.addReading(reading)
 
@@ -65,7 +65,7 @@ mainUsername = "Navid"
 iphone = "b8:7b:c5:00:6e:89"
 # dev_mac = "e4:5f:01:d3:40:c6"
 validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
-validMacs = ["5c:e9:1e:88:71:b1"]
+# validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
 channel_n = 48  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
