@@ -171,7 +171,7 @@ def processPacket(pkt):
   Globals.grids[pkt.addr2].addReading(reading)
   visualizePacket(pkt.addr2, pkt.addr1)
 
-@Globals.scene.run_forever(interval_ms=5000)
+# @Globals.scene.run_forever(interval_ms=5000)
 def reloadEstimates():
   for mac in Globals.grids.keys():
     print("Mac:", mac)
@@ -275,6 +275,10 @@ channelIndex = 0
 def channelHop():
   channelIndex = (channelIndex + 1) % len(allChannels)
   changeChannel(allChannels[channelIndex])
+
+@Globals.scene.run_after_interval(interval_ms=10000)
+def start():
+  Globals.scene.run_forever(reloadEstimates, 5000)
 
 changeChannel(channel_n)
 t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)
