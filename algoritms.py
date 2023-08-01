@@ -2,6 +2,7 @@ import numpy as np
 from time import time
 from typing import Tuple
 from scipy.spatial.transform import Rotation as R
+from grid import *
 #set camera as parent
 
 Vector = Tuple[float, float, float]
@@ -52,15 +53,6 @@ def solveLines(lines: list[Tuple[Vector, Vector]], weights: list[float] = None):
   right = np.array(svalues)
   return np.linalg.solve(left, right)
 
-def getSampleWeight(rotations: list[Rotation]) -> float:
-  radianRotations = []
-  for rotation in rotations:
-    radians = rotationToYRotation(rotation)
-    radianRotations.append(radians)
-  if getUnsampledRegions(radianRotations, 3) != 0:
-    return 0
-  unsamlpedRegions = getUnsampledRegions(radianRotations, 12)
-  return 1 - unsamlpedRegions / 12
 
 #number of consevituve unsampled regions
 def getUnsampledRegions(radianRotations: list[float], bins: int) -> float:
@@ -87,7 +79,64 @@ def getUnsampledRegions(radianRotations: list[float], bins: int) -> float:
         break
     if currentRegion > maxRegion:
       maxRegion = currentRegion
+  return maxRegion
 
-print(rotationToYRotation((0, 0.4794255, 0, 0.8775826)))
+def getSampleWeight(rotations: list[Rotation]) -> float:
+  radianRotations = []
+  for rotation in rotations:
+    radians = rotationToYRotation(rotation)
+    radianRotations.append(radians)
+  #they should at least each cover a third of the circle
+  if getUnsampledRegions(radianRotations, 3) != 0:
+    return 0
+  unsamlpedRegions = getUnsampledRegions(radianRotations, 12)
+  #My thinking is if the max unsampled regions is halved, then the weight should quadruple since reductions in unsampled regions become more and more difficult
+  return 1 - (unsamlpedRegions / 4)**2
 
-print(np.arctan2(1,0))
+def getEstimate(grid):
+  bestSignal = -500
+  bestLocation = (0, 0)
+  for space in grid.spaces.values():
+    if space.average > bestSignal:
+      bestSignal = space.average
+      bestLocation = space.center
+  print(bestLocation, bestSignal)
+  return bestLocation
+
+def getMaxReading(space):
+  maxReading = space.readings[0]
+  for reading in space.readings:
+    if reading[2] > maxReading[2]:
+      maxReading = reading
+  return maxReading
+
+def newGetEstimate(grid):
+  lines = []
+  weights = []
+  for space in grid.spaces.values():
+    rotations = list(map(lambda r: r[1], space.readings))
+    weight = getSampleWeight(rotations)
+    if weight == 0:
+      continue
+    bestReading = getMaxReading(space)
+    vector = R.from_quat(bestReading[0]).apply((0, 0, -1))
+    lines.append((space.center, vector))
+    weights.append(weight)
+  if len(lines) == 0:
+    return None
+  return solveLines(lines, weights)
+
+
+if __name__ == "__main__":
+  #make an array of random rotations about the y axis represented as quaternions
+  testRotations = []
+  for num in range(5, 24):
+    for i in range(num):
+      # testRotations.append(R.random().as_quat())
+      testRotations.append(R.from_euler('y', np.pi * i * 2 / num).as_quat())
+    # del testRotations[int(i / 2)]
+    # del testRotations[int(i / 2)]
+    # del testRotations[int(i / 2)]
+    # for rotation in testRotations:
+      # print(rotationToYRotation(rotation))
+    print(num, ":", getSampleWeight(testRotations))

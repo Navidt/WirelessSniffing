@@ -1,3 +1,5 @@
+from typing import Tuple
+
 class GridSpace():
   def __init__(self, center, readings=[]):
     self.center = center
@@ -14,7 +16,7 @@ class GridSpace():
 class Grid():
   def __init__(self, xWidth, yWidth, zWidth, center=(0, 0, 0)) -> None:
     self.origin = (center[0] - xWidth / 2, center[1] - yWidth / 2, center[2] - zWidth / 2)
-    self.spaces = {}
+    self.spaces: dict[Tuple[float, float, float], GridSpace] = {}
     self.xWidth = xWidth
     self.yWidth = yWidth
     self.zWidth = zWidth

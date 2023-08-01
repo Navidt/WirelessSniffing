@@ -6,6 +6,7 @@ import subprocess, shlex
 from arena_helpers import *
 import time
 from algoritms import *
+from grid import *
 
 def end_program_callback(scene: Scene):
     # print("cancelling")
@@ -14,42 +15,6 @@ def end_program_callback(scene: Scene):
       print(obj)
       Globals.scene.delete_object(obj)
 # type Reading = Tuple[Tuple(float, float, float), Tuple(float, float, float, float), float]
-class GridSpace():
-  def __init__(self, center, readings=[]):
-    self.center = center
-    self.readings = readings
-    self.total = 0
-    for reading in readings:
-      # print(reading)
-      self.total += reading[2]
-    self.average = self.total / len(readings)
-  def addReading(self, reading):
-    self.total += reading[2]
-    self.readings.append(reading)
-    self.average = self.total / len(self.readings)
-class Grid():
-  def __init__(self, xWidth, yWidth, zWidth, center=(0, 0, 0)) -> None:
-    self.origin = (center[0] - xWidth / 2, center[1] - yWidth / 2, center[2] - zWidth / 2)
-    self.spaces = {}
-    self.xWidth = xWidth
-    self.yWidth = yWidth
-    self.zWidth = zWidth
-  def addReading(self, reading):
-    position = reading[0]
-    xOffset = position[0] - self.origin[0]
-    yOffset = position[1] - self.origin[1]
-    zOffset = position[2] - self.origin[2]
-    spaceCoords = (int(xOffset / self.xWidth), int(yOffset / self.yWidth), int(zOffset / self.zWidth))
-    if spaceCoords in self.spaces.keys():
-      self.spaces[spaceCoords].addReading(reading)
-    else:
-      centerX = (spaceCoords[0] + 0.5) * self.xWidth + self.origin[0]
-      centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
-      centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
-      self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), [reading])
-  def addReadings(self, readings):
-    for reading in readings:
-      self.addReading(reading)
 
 spaceDimentions = (0.1, 0.1, 0.1)
 
@@ -82,41 +47,12 @@ class Globals():
 packetsProcessed = 0
 def processPacket(pkt):
   global packetsProcessed
-  # ls(pkt)
-  # print("hi:", pkt)
-  # if TCP in pkt:
-  #     tcp_sport=pkt[TCP].sport
-  #     tcp_dport=pkt[TCP].dport
-  #     print(tcp_sport, tcp_dport)
-  # if IP in pkt:
-  #   ip_src=pkt[IP].src
-  #   print(ip_src)
-  #   ip_dst=pkt[IP].dst
-  #   if ip_src == "192.168.40.24":
-  #     print("DST:", ip_dst)
   if not pkt.haslayer(Dot11):
     return
   if pkt.addr2 == None:
     return
   if pkt.addr2 not in validMacs:
     return
-  # if pkt.dBm_AntSignal < -40:
-  #   return
-  # print(pkt.addr2)
-  # if pkt.addr2 != dev_mac:
-  #   if pkt.addr2 == "5c:e9:1e:88:71:b1":
-  #     print("Other:", pkt.addr1)
-  #   # print("BOOM: ", Raw(pkt).load)
-  #   # print(pkt.payload)
-  #   # print(pkt.payload.payload.payload)
-  #   return
-  # print(pkt.addr1)
-  # ls(pkt)
-  # print(pkt.addr1)
-  # if pkt.addr2 != "e4:5f:01:d3:40:c6" and pkt.addr2 != "b4:b0:24:17:d1:7e":
-  #   return
-  # print(pkt.addr2)
-  # print(pkt.addr2, pkt.dBm_AntSignal)
   user = None
   for k, v in Globals.scene.users.items():
      if v.displayName == mainUsername:
@@ -124,13 +60,10 @@ def processPacket(pkt):
         break
   if user == None:
      return
-  # print("h1")
-  # print(pkt.addr2)
   packetsProcessed += 1
   if packetsProcessed == 50:
     print("P")
     packetsProcessed = 0
-  # print(pkt.addr2)
   reading = ((user.data.position.x, user.data.position.y - 0.1, user.data.position.z), (user.data.rotation.x, user.data.rotation.y, user.data.rotation.z, user.data.rotation.w), pkt.dBm_AntSignal)
   if not pkt.addr2 in Globals.grids:
     # if reading[2] < -40:
@@ -144,7 +77,6 @@ def reloadEstimates():
   for mac in Globals.grids.keys():
     print("Mac:", mac)
     reloadEstimate(mac)
-  # reloadEstimate(dev_mac)
 
 def getColor(min, max, signal):
   ratio = 0
@@ -166,7 +98,6 @@ def clearGrid(mac):
 
 def reloadGrid():
   global Globals
-  # global Globals.selectedMac, Globals.spaceMarkers
   if Globals.selectedMac == None:
     return
   Globals.macMarkers[Globals.selectedMac].data.color = Color(0, 255, 0)
@@ -203,16 +134,6 @@ async def changeSelectedMac(newMac):
     reloadGrid()
   else:
     Globals.selectedMac = None
-
-def getEstimate(grid):
-  bestSignal = -500
-  bestLocation = (0, 0)
-  for space in grid.spaces.values():
-    if space.average > bestSignal:
-      bestSignal = space.average
-      bestLocation = space.center
-  print(bestLocation, bestSignal)
-  return bestLocation
 
 def reloadEstimate(mac):
   if not mac in Globals.grids.keys():
