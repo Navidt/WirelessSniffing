@@ -10,6 +10,8 @@ import time
 
 def end_program_callback(scene: Scene):
     # print("cancelling")
+    for address, grid in Globals.grids.items():
+      grid.saveToFile(f"data-{address}.txt")
     ids = list(Globals.scene.all_objects.values())
     for obj in ids:
       print(obj)
@@ -25,10 +27,10 @@ mainUsername = "Navid"
 # dev_mac = "44:12:44:69:f4:62"
 iphone = "b8:7b:c5:00:6e:89"
 # dev_mac = "e4:5f:01:d3:40:c6"
-validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
-# validMacs = ["5c:e9:1e:88:71:b1"]
+# validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
+validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
-channel_n = 48  # Channel to listen on
+channel_n = 44  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of mac address text marking the device in the scene
@@ -69,10 +71,12 @@ def processPacket(pkt):
       # return
     Globals.grids[pkt.addr2] = Grid(*spaceDimentions)
   Globals.grids[pkt.addr2].addReading(reading)
+  print(rotationToYRotation(reading[1]), reading[2])
   visualizePacket(pkt.addr2, pkt.addr1, Globals.macMarkers, Globals.scene)
 
-# @Globals.scene.run_forever(interval_ms=5000)
+@Globals.scene.run_forever(interval_ms=5000)
 def reloadEstimates():
+  print("Reloading")
   for mac in Globals.grids.keys():
     print("Mac:", mac)
     reloadEstimate(mac)
@@ -138,7 +142,10 @@ def reloadEstimate(mac):
   if not mac in Globals.grids.keys():
     return
   grid = Globals.grids[mac]
-  bestLocation = getEstimate(grid)
+  # bestLocation = getEstimate(grid)
+  bestLocation = newGetEstimate(grid)
+  if bestLocation == None:
+    return
   if not mac in Globals.macMarkers.keys():
     def callback(s, evt, msg):
       print("HEYOOOOOOO", mac)
@@ -164,9 +171,10 @@ def channelHop():
   channelIndex = (channelIndex + 1) % len(allChannels)
   changeChannel(allChannels[channelIndex])
 
-@Globals.scene.run_after_interval(interval_ms=10000)
+@Globals.scene.run_after_interval(interval_ms=10)
 def start():
-  Globals.scene.run_forever(reloadEstimates, 5000)
+  print("Starting")
+  # Globals.scene.run_forever(reloadEstimates, 5000)
 
 changeChannel(channel_n)
 t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)

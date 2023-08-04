@@ -111,15 +111,18 @@ def getMaxReading(space):
   return maxReading
 
 def newGetEstimate(grid):
+  print("HI")
   lines = []
   weights = []
   for space in grid.spaces.values():
     rotations = list(map(lambda r: r[1], space.readings))
     weight = getSampleWeight(rotations)
+    print("HI")
+    print(weight)
     if weight == 0:
       continue
     bestReading = getMaxReading(space)
-    vector = R.from_quat(bestReading[0]).apply((0, 0, -1))
+    vector = R.from_quat(bestReading[1]).apply((0, 0, -1))
     lines.append((space.center, vector))
     weights.append(weight)
   if len(lines) == 0:

@@ -3,6 +3,7 @@ import time
 import math
 from typing import Tuple
 from scipy.spatial.transform import Rotation as R
+from grid import *
 def colorFlip(color):
     return (255 - color[0], 255 - color[1], 255 - color[2])
 
@@ -110,6 +111,8 @@ def makePacketArrow(position, directionVector, color, ttl: float, text: str, sce
   scene.add_object(backCone)
   scene.add_object(text)
   return secretParent
+
+
 
 def visualizePacket(originMac: str, destMac: str, macMarkers: dict[str: Grid], scene: Scene):
   #nextTimes is a dictionary from the mac address tuple to the next time a packet can be visualized
