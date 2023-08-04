@@ -132,16 +132,6 @@ async def changeSelectedMac(newMac: str):
   else:
     Globals.selectedMac = None
 
-def getEstimate(grid: Grid):
-  bestSignal = -500
-  bestLocation = (0, 0)
-  for space in grid.spaces.values():
-    if space.average > bestSignal:
-      bestSignal = space.average
-      bestLocation = space.center
-  print(bestLocation, bestSignal)
-  return bestLocation
-
 def reloadEstimate(mac):
   if not mac in Globals.grids.keys():
     return
