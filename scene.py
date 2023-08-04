@@ -4,6 +4,8 @@ from typing import Tuple
 from scapy.all import AsyncSniffer, Dot11, ls, Raw, IP, TCP, getmacbyip
 import subprocess, shlex
 from arena_helpers import *
+from algoritms import *
+from grid import *
 import time
 
 def end_program_callback(scene: Scene):
