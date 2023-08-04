@@ -6,54 +6,13 @@ import subprocess, shlex
 from arena_helpers import *
 import time
 
-Rotation = Tuple[float, float, float, float]
-Vector = Tuple[float, float, float]
-Reading = Tuple[Vector, Rotation, float]
-
 def end_program_callback(scene: Scene):
     # print("cancelling")
     ids = list(Globals.scene.all_objects.values())
     for obj in ids:
       print(obj)
       Globals.scene.delete_object(obj)
-
-class GridSpace():
-  def __init__(self, center, readings: list[Reading]=[]):
-    self.center = center
-    self.readings = readings
-    self.total = 0
-    for reading in readings:
-      # print(reading)
-      self.total += reading[2]
-    self.average = self.total / len(readings)
-  def addReading(self, reading: Reading):
-    self.total += reading[2]
-    self.readings.append(reading)
-    self.average = self.total / len(self.readings)
-class Grid():
-  def __init__(self, xWidth: float, yWidth: float, zWidth: float, center=(0, 0, 0)) -> None:
-    self.origin = (center[0] - xWidth / 2, center[1] - yWidth / 2, center[2] - zWidth / 2)
-    self.spaces = {}
-    self.xWidth = xWidth
-    self.yWidth = yWidth
-    self.zWidth = zWidth
-  def addReading(self, reading: Reading):
-    position = reading[0]
-    xOffset = position[0] - self.origin[0]
-    yOffset = position[1] - self.origin[1]
-    zOffset = position[2] - self.origin[2]
-    spaceCoords = (int(xOffset / self.xWidth), int(yOffset / self.yWidth), int(zOffset / self.zWidth))
-    if spaceCoords in self.spaces.keys():
-      self.spaces[spaceCoords].addReading(reading)
-    else:
-      centerX = (spaceCoords[0] + 0.5) * self.xWidth + self.origin[0]
-      centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
-      centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
-      self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), [reading])
-  def addReadings(self, readings: list[Reading]):
-    for reading in readings:
-      self.addReading(reading)
-
+# type Reading = Tuple[Tuple(float, float, float), Tuple(float, float, float, float), float]
 spaceDimentions = (0.1, 0.1, 0.1)
 
 mainUsername = "Navid"
@@ -80,40 +39,7 @@ class Globals():
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback)
 # Globals.selectedMac = dev_mac
 #Size of sphere should be proportional to number of packets
-def visualizePacket(originMac: str, destMac: str):
-  #nextTimes is a dictionary from the mac address tuple to the next time a packet can be visualized
-  #numberOfPackets is a dictionary from the mac address tuple to the number of packets that will be visualized
-  if not originMac in Globals.macMarkers.keys() or not destMac in Globals.macMarkers.keys():
-    return
-  tupleKey = (originMac, destMac)
-  if not tupleKey in visualizePacket.numberOfPackets.keys():
-    visualizePacket.numberOfPackets[tupleKey] = 1
-  if tupleKey in visualizePacket.nextTimes.keys() and time.time() < visualizePacket.nextTimes[tupleKey]:
-    visualizePacket.numberOfPackets[tupleKey] += 1
-    return
-  startLocation = Globals.macMarkers[originMac].data.position
-  endLocation = Globals.macMarkers[destMac].data.position
-  if startLocation.distance_to(endLocation) < 0.1:
-    visualizePacket.numberOfPackets[tupleKey] += 1
-    return
-  animationDuration = max(startLocation.distance_to(endLocation) * 2000, 2000)
-  visualizePacket.nextTimes[tupleKey] = time.time() + 0.5
-  print("Packets:", visualizePacket.numberOfPackets[tupleKey])
-  numPackets = visualizePacket.numberOfPackets[tupleKey]
-  packetObject = makePacketArrow(startLocation, difference(endLocation, startLocation), (255, 0, 0), animationDuration / 2000, f"{numPackets} pkts", Globals.scene)
-  packetObject.dispatch_animation(
-    Animation(
-      property="position",
-      start=startLocation,
-      end=endLocation,
-      easing="linear",
-      duration=animationDuration
-    )
-  )
-  Globals.scene.run_animations(packetObject)
-  visualizePacket.numberOfPackets[tupleKey] = 0
-visualizePacket.nextTimes: dict[Tuple[str, str], float] = {}
-visualizePacket.numberOfPackets: dict[Tuple[str, str], int] = {}
+
 
 packetsProcessed = 0
 def processPacket(pkt):
@@ -131,27 +57,23 @@ def processPacket(pkt):
         break
   if user == None:
      return
-  # print("h1")
-  # print(pkt.addr2)
   packetsProcessed += 1
   if packetsProcessed == 50:
     print("P")
     packetsProcessed = 0
-  # print(pkt.addr2)
   reading = ((user.data.position.x, user.data.position.y - 0.1, user.data.position.z), (user.data.rotation.x, user.data.rotation.y, user.data.rotation.z, user.data.rotation.w), pkt.dBm_AntSignal)
   if not pkt.addr2 in Globals.grids:
     # if reading[2] < -40:
       # return
     Globals.grids[pkt.addr2] = Grid(*spaceDimentions)
   Globals.grids[pkt.addr2].addReading(reading)
-  visualizePacket(pkt.addr2, pkt.addr1)
+  visualizePacket(pkt.addr2, pkt.addr1, Globals.macMarkers, Globals.scene)
 
-@Globals.scene.run_forever(interval_ms=5000)
+# @Globals.scene.run_forever(interval_ms=5000)
 def reloadEstimates():
   for mac in Globals.grids.keys():
     print("Mac:", mac)
     reloadEstimate(mac)
-  # reloadEstimate(dev_mac)
 
 def getColor(min, max, signal):
   ratio = 0
@@ -173,7 +95,6 @@ def clearGrid(mac: str):
 
 def reloadGrid():
   global Globals
-  # global Globals.selectedMac, Globals.spaceMarkers
   if Globals.selectedMac == None:
     return
   Globals.macMarkers[Globals.selectedMac].data.color = Color(0, 255, 0)
@@ -250,6 +171,10 @@ channelIndex = 0
 def channelHop():
   channelIndex = (channelIndex + 1) % len(allChannels)
   changeChannel(allChannels[channelIndex])
+
+@Globals.scene.run_after_interval(interval_ms=10000)
+def start():
+  Globals.scene.run_forever(reloadEstimates, 5000)
 
 changeChannel(channel_n)
 t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)

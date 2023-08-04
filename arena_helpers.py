@@ -1,6 +1,7 @@
 from arena import *
 import time
 import math
+from typing import Tuple
 from scipy.spatial.transform import Rotation as R
 def colorFlip(color):
     return (255 - color[0], 255 - color[1], 255 - color[2])
@@ -109,3 +110,38 @@ def makePacketArrow(position, directionVector, color, ttl: float, text: str, sce
   scene.add_object(backCone)
   scene.add_object(text)
   return secretParent
+
+def visualizePacket(originMac: str, destMac: str, macMarkers: dict[str: Grid], scene: Scene):
+  #nextTimes is a dictionary from the mac address tuple to the next time a packet can be visualized
+  #numberOfPackets is a dictionary from the mac address tuple to the number of packets that will be visualized
+  if not originMac in macMarkers.keys() or not destMac in macMarkers.keys():
+    return
+  tupleKey = (originMac, destMac)
+  if not tupleKey in visualizePacket.numberOfPackets.keys():
+    visualizePacket.numberOfPackets[tupleKey] = 1
+  if tupleKey in visualizePacket.nextTimes.keys() and time.time() < visualizePacket.nextTimes[tupleKey]:
+    visualizePacket.numberOfPackets[tupleKey] += 1
+    return
+  startLocation = macMarkers[originMac].data.position
+  endLocation = macMarkers[destMac].data.position
+  if startLocation.distance_to(endLocation) < 0.1:
+    visualizePacket.numberOfPackets[tupleKey] += 1
+    return
+  animationDuration = max(startLocation.distance_to(endLocation) * 2000, 2000)
+  visualizePacket.nextTimes[tupleKey] = time.time() + 0.5
+  print("Packets:", visualizePacket.numberOfPackets[tupleKey])
+  numPackets = visualizePacket.numberOfPackets[tupleKey]
+  packetObject = makePacketArrow(startLocation, difference(endLocation, startLocation), (255, 0, 0), animationDuration / 2000, f"{numPackets} pkts", scene)
+  packetObject.dispatch_animation(
+    Animation(
+      property="position",
+      start=startLocation,
+      end=endLocation,
+      easing="linear",
+      duration=animationDuration
+    )
+  )
+  scene.run_animations(packetObject)
+  visualizePacket.numberOfPackets[tupleKey] = 0
+visualizePacket.nextTimes: dict[Tuple[str, str], float] = {}
+visualizePacket.numberOfPackets: dict[Tuple[str, str], int] = {}
