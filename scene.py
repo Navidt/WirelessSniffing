@@ -46,29 +46,6 @@ class Globals():
 # Globals.selectedMac = dev_mac
 #Size of sphere should be proportional to number of packets
 
-class Indicator():
-  def makeCenterArrow(coords, parent):
-    centerCircle = Circle(
-      object_id=f"{parent}CenterCircle"
-      position=(0, 0, -1),
-      radius=0.02,
-      color=(100, 100, 100),
-      parent=parent
-    )
-    thickLine = ThickLine(
-      object_id=f"{parent}ArrowLine",
-      lineWidth=0.01,
-      path=((0, 0, 0), (0, 0.5, 0)),
-      color=(0,255,0)
-    )
-  def __init__(self, segments, user_id, grids, startCoords, startDevice, scene):
-    self.user_id = user_id
-    self.grids = grids
-    self.device = startDevice
-    self.coords = startCoords
-    self.segmentIndicators = []
-    self.arrow = 
-
 
 packetsProcessed = 0
 def processPacket(pkt):
