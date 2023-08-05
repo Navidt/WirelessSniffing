@@ -33,6 +33,8 @@ validMacs = ["5c:e9:1e:88:71:b1"]
 channel_n = 44  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
+  #text in front of the user
+  dynamicText: dict[str: Object]
   #dictionary of mac address text marking the device in the scene
   macMarkers: dict[str: Object] = {}
   #dictionary of positions to the selected device's signal grid
@@ -43,6 +45,29 @@ class Globals():
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback)
 # Globals.selectedMac = dev_mac
 #Size of sphere should be proportional to number of packets
+
+class Indicator():
+  def makeCenterArrow(coords, parent):
+    centerCircle = Circle(
+      object_id=f"{parent}CenterCircle"
+      position=(0, 0, -1),
+      radius=0.02,
+      color=(100, 100, 100),
+      parent=parent
+    )
+    thickLine = ThickLine(
+      object_id=f"{parent}ArrowLine",
+      lineWidth=0.01,
+      path=((0, 0, 0), (0, 0.5, 0)),
+      color=(0,255,0)
+    )
+  def __init__(self, segments, user_id, grids, startCoords, startDevice, scene):
+    self.user_id = user_id
+    self.grids = grids
+    self.device = startDevice
+    self.coords = startCoords
+    self.segmentIndicators = []
+    self.arrow = 
 
 
 packetsProcessed = 0
@@ -92,8 +117,8 @@ def getColor(min, max, signal):
 def clearGrid(mac: str):
   for obj in Globals.spaceMarkers.values():
     # print(obj)
-    # Globals.scene.delete_object(obj)
-    Globals.scene._publish(obj, "delete")
+    Globals.scene.delete_object(obj)
+    # Globals.scene._publish(obj, "delete")
   Globals.spaceMarkers.clear()
   Globals.macMarkers[mac].data.color = Color(0, 0, 0)
   Globals.scene.update_object(Globals.macMarkers[mac])

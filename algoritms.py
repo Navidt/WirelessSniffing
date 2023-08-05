@@ -91,7 +91,7 @@ def getSampleWeight(rotations: list[Rotation]) -> float:
     return 0
   unsamlpedRegions = getUnsampledRegions(radianRotations, 12)
   #My thinking is if the max unsampled regions is halved, then the weight should quadruple since reductions in unsampled regions become more and more difficult
-  return 1 - (unsamlpedRegions / 4)**2
+  return max(1 - (unsamlpedRegions / 4)**2, 0)
 
 def getEstimate(grid):
   bestSignal = -500
