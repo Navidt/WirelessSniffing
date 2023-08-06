@@ -2,7 +2,7 @@ from typing import Tuple
 from algoritms import *
 import numpy as np
 class GridSpace():
-  def __init__(self, center, angleBinCount, readings=None, callback=None):
+  def __init__(self, center, angleBinCount, readings=None):
     if readings == None:
       readings = []
     self.center = center
@@ -12,7 +12,6 @@ class GridSpace():
     self.angleTotals = [0] * angleBinCount
     self.readings = readings
     self.total = 0
-    self.callback = callback
     for reading in readings:
       # print(reading)
       self.total += reading[2]
@@ -28,8 +27,6 @@ class GridSpace():
     self.angleTotals[angleBin] += reading[2]
     self.angleAverages[angleBin] = self.angleTotals[angleBin] / len(self.angleBins[angleBin])
     self.average = self.total / len(self.readings)
-    if self.callback != None:
-      self.callback(reading)
   
   def serialize(self):
     string = f"{self.center[0]},{self.center[1]},{self.center[2]},{self.average}\n"

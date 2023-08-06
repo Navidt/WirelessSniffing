@@ -6,7 +6,7 @@ class Indicator():
   def updateCircle(self):
     for i, angleBin in enumerate(self.currentSpace.angleBins):
       if len(angleBin) == 0:
-        color = (0, 125, 125)
+        color = (255, 0, 0)
       else:
         color = (0, 255, 0)
       self.segmentMarkers[i].data.color = color
