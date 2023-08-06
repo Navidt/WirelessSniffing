@@ -8,6 +8,9 @@ from grid import *
 Vector = Tuple[float, float, float]
 #Quaternion rotation
 Rotation = Tuple[float, float, float, float]
+
+Reading = Tuple[Vector, Rotation, float]
+
 def dot(a: Vector, b: Vector):
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 def scale(s: float, v: Vector):
@@ -44,7 +47,6 @@ def solveLines(lines: list[Tuple[Vector, Vector]], weights: list[float] = None):
       weight = 1
     else:
       weight = weights[i]
-    print(weight)
     coeffs = generateCoefficients(line)
     for i in range(3):
       rows[i] = add(rows[i], scale(weight, coeffs[i][0]))
@@ -55,41 +57,32 @@ def solveLines(lines: list[Tuple[Vector, Vector]], weights: list[float] = None):
 
 
 #number of consevituve unsampled regions
-def getUnsampledRegions(radianRotations: list[float], bins: int) -> float:
-  regions =  [0] * bins
-  for radians in radianRotations:
-    regions[int((radians + np.pi) * bins / (2 * np.pi))] += 1
+def getUnsampledRegions(bins: list[list]) -> float:
+  
   #find the greatest consecutive zero region assuming the list is circular
   maxRegion = 0
-  currentRegion = 0
-  for region in regions:
-    if region == 0:
-      currentRegion += 1
+  currentBin = 0
+  for bin in bins:
+    if len(bin) == 0:
+      currentBin += 1
     else:
-      if currentRegion > maxRegion:
-        maxRegion = currentRegion
-      currentRegion = 0
-  if currentRegion == len(regions):
-    maxRegion = currentRegion
-  elif currentRegion != 0:
-    for region in regions:
-      if region == 0:
-        currentRegion += 1
+      if currentBin > maxRegion:
+        maxRegion = currentBin
+      currentBin = 0
+  if currentBin == len(bins):
+    maxRegion = currentBin
+  elif currentBin != 0:
+    for bin in bins:
+      if len(bin) == 0:
+        currentBin += 1
       else:
         break
-    if currentRegion > maxRegion:
-      maxRegion = currentRegion
+    if currentBin > maxRegion:
+      maxRegion = currentBin
   return maxRegion
 
-def getSampleWeight(rotations: list[Rotation]) -> float:
-  radianRotations = []
-  for rotation in rotations:
-    radians = rotationToYRotation(rotation)
-    radianRotations.append(radians)
-  #they should at least each cover a third of the circle
-  if getUnsampledRegions(radianRotations, 3) != 0:
-    return 0
-  unsamlpedRegions = getUnsampledRegions(radianRotations, 12)
+def getSampleWeight(bins: list[list[Reading]]) -> float:
+  unsamlpedRegions = getUnsampledRegions(bins)
   #My thinking is if the max unsampled regions is halved, then the weight should quadruple since reductions in unsampled regions become more and more difficult
   return max(1 - (unsamlpedRegions / 4)**2, 0)
 
@@ -115,19 +108,20 @@ def newGetEstimate(grid):
   lines = []
   weights = []
   for space in grid.spaces.values():
-    rotations = list(map(lambda r: r[1], space.readings))
-    weight = getSampleWeight(rotations)
-    print("HI")
-    print(weight)
+    weight = getSampleWeight(space.angleBins)
+    # print("HI")
+    # print(weight)
+    print("Space:", space.center, "Weight:", weight, "Average:", space.average, "Readings:", len(space.readings))
     if weight == 0:
       continue
     bestReading = getMaxReading(space)
     vector = R.from_quat(bestReading[1]).apply((0, 0, -1))
     lines.append((space.center, vector))
     weights.append(weight)
-  if len(lines) == 0:
+  if len(lines) < 2:
     return None
-  return solveLines(lines, weights)
+  position = solveLines(lines, weights)
+  return ((position[0], position[1], position[2]), lines)
 
 
 if __name__ == "__main__":

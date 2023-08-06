@@ -1,33 +1,51 @@
 from typing import Tuple
-
+from algoritms import *
+import numpy as np
 class GridSpace():
-  def __init__(self, center, readings=[], callback=None):
+  def __init__(self, center, angleBinCount, readings=None, callback=None):
+    if readings == None:
+      readings = []
     self.center = center
+    self.angleBinCount = angleBinCount
+    self.angleBins = [[]] * angleBinCount
+    self.angleAverages = [0] * angleBinCount
+    self.angleTotals = [0] * angleBinCount
     self.readings = readings
     self.total = 0
     self.callback = callback
     for reading in readings:
       # print(reading)
       self.total += reading[2]
-    self.average = self.total / len(readings)
+    if len(readings) > 0:
+      self.average = self.total / len(readings)
+  
   def addReading(self, reading):
     self.total += reading[2]
     self.readings.append(reading)
+    angle = rotationToYRotation(reading[1])
+    angleBin = int(angle / (2 * np.pi / self.angleBinCount))
+    self.angleBins[angleBin].append(reading)
+    self.angleTotals[angleBin] += reading[2]
+    self.angleAverages[angleBin] = self.angleTotals[angleBin] / len(self.angleBins[angleBin])
     self.average = self.total / len(self.readings)
     if self.callback != None:
       self.callback(reading)
+  
   def serialize(self):
     string = f"{self.center[0]},{self.center[1]},{self.center[2]},{self.average}\n"
     for reading in self.readings:
       string += f"{reading[0][0]},{reading[0][1]},{reading[0][2]},{reading[1][0]},{reading[1][1]},{reading[1][2]},{reading[1][3]},{reading[2]}\n"
     return string
+  
+
 class Grid():
-  def __init__(self, xWidth, yWidth, zWidth, center=(0, 0, 0)) -> None:
+  def __init__(self, xWidth, yWidth, zWidth, center=(0, 0, 0), angleBinCount=12) -> None:
     self.origin = (center[0] - xWidth / 2, center[1] - yWidth / 2, center[2] - zWidth / 2)
     self.spaces: dict[Tuple[float, float, float], GridSpace] = {}
     self.xWidth = xWidth
     self.yWidth = yWidth
     self.zWidth = zWidth
+    self.angleBinCount = angleBinCount
   
   def getCoordsForPosition(self, position):
     xOffset = position[0] - self.origin[0]
@@ -50,7 +68,7 @@ class Grid():
     centerX = (spaceCoords[0] + 0.5) * self.xWidth + self.origin[0]
     centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
     centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
-    self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ))
+    self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), 12)
   
   def addReadings(self, readings):
     for reading in readings:

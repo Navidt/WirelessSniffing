@@ -6,8 +6,14 @@ import subprocess, shlex
 from arena_helpers import *
 from algoritms import *
 from grid import *
+from indicator import Indicator
 import time
 
+def user_join_callback(scene: Scene, camera: Camera, msg):
+  startCoords = (camera.data.position.x, camera.data.position.y, camera.data.position.z)
+  Globals.grids[validMacs[0]] = Grid(*spaceDimentions)
+  Globals.indicators[camera.object_id] = Indicator(camera, scene, grids=Globals.grids, startDevice=validMacs[0])
+  return
 def end_program_callback(scene: Scene):
     # print("cancelling")
     for address, grid in Globals.grids.items():
@@ -16,8 +22,8 @@ def end_program_callback(scene: Scene):
     for obj in ids:
       print(obj)
       Globals.scene.delete_object(obj)
-# type Reading = Tuple[Tuple(float, float, float), Tuple(float, float, float, float), float]
-spaceDimentions = (0.1, 0.1, 0.1)
+
+spaceDimentions = (0.5, 0.5, 0.5)
 
 mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
@@ -33,6 +39,8 @@ validMacs = ["5c:e9:1e:88:71:b1"]
 channel_n = 44  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
+  #dictionary of camera ids to indicators
+  indicators: dict[str: Indicator]
   #text in front of the user
   dynamicText: dict[str: Object]
   #dictionary of mac address text marking the device in the scene
@@ -42,7 +50,7 @@ class Globals():
   #dictionary of all rssi readings, mapping the mac address of the grid of the readings 
   grids: dict[str: Grid] = {}
   selectedMac = None
-  scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback)
+  scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback, user_join_callback=user_join_callback)
 # Globals.selectedMac = dev_mac
 #Size of sphere should be proportional to number of packets
 
@@ -73,7 +81,7 @@ def processPacket(pkt):
       # return
     Globals.grids[pkt.addr2] = Grid(*spaceDimentions)
   Globals.grids[pkt.addr2].addReading(reading)
-  print(rotationToYRotation(reading[1]), reading[2])
+  # print(rotationToYRotation(reading[1]), reading[2])
   visualizePacket(pkt.addr2, pkt.addr1, Globals.macMarkers, Globals.scene)
 
 @Globals.scene.run_forever(interval_ms=5000)
@@ -145,9 +153,16 @@ def reloadEstimate(mac):
     return
   grid = Globals.grids[mac]
   # bestLocation = getEstimate(grid)
-  bestLocation = newGetEstimate(grid)
-  if bestLocation == None:
+  result = newGetEstimate(grid)
+  if result == None:
     return
+  bestLocation, lines = result
+  for line in lines:
+    Globals.scene.add_object(Line(
+      start=line[0],
+      end=add(line[0], line[1]),
+      color=Color(255, 0, 0)
+    ))
   if not mac in Globals.macMarkers.keys():
     def callback(s, evt, msg):
       print("HEYOOOOOOO", mac)

@@ -1,5 +1,5 @@
 from arena import *
-import time
+from time import time
 import math
 from typing import Tuple
 from scipy.spatial.transform import Rotation as R
@@ -14,12 +14,12 @@ def makeButton(position, buttonColor, text, action, scene):
     buttonSleepDelay = 0.5
     def callback(s, evt, msg):
         if evt.type == "mousedown":
-            t = time.time()
+            t = time()
             if (t - callback.lastTimePressed) < buttonSleepDelay:
                 return
             callback.lastTimePressed = t
             action(s, evt, msg)
-    callback.lastTimePressed = time.time()
+    callback.lastTimePressed = time()
     button = Box(
         object_id=f"Button{text}",
         position=position,
@@ -122,7 +122,7 @@ def visualizePacket(originMac: str, destMac: str, macMarkers: dict[str: Grid], s
   tupleKey = (originMac, destMac)
   if not tupleKey in visualizePacket.numberOfPackets.keys():
     visualizePacket.numberOfPackets[tupleKey] = 1
-  if tupleKey in visualizePacket.nextTimes.keys() and time.time() < visualizePacket.nextTimes[tupleKey]:
+  if tupleKey in visualizePacket.nextTimes.keys() and time() < visualizePacket.nextTimes[tupleKey]:
     visualizePacket.numberOfPackets[tupleKey] += 1
     return
   startLocation = macMarkers[originMac].data.position
@@ -131,7 +131,7 @@ def visualizePacket(originMac: str, destMac: str, macMarkers: dict[str: Grid], s
     visualizePacket.numberOfPackets[tupleKey] += 1
     return
   animationDuration = max(startLocation.distance_to(endLocation) * 2000, 2000)
-  visualizePacket.nextTimes[tupleKey] = time.time() + 0.5
+  visualizePacket.nextTimes[tupleKey] = time() + 0.5
   print("Packets:", visualizePacket.numberOfPackets[tupleKey])
   numPackets = visualizePacket.numberOfPackets[tupleKey]
   packetObject = makePacketArrow(startLocation, difference(endLocation, startLocation), (255, 0, 0), animationDuration / 2000, f"{numPackets} pkts", scene)
