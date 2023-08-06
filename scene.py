@@ -11,7 +11,7 @@ import time
 
 def user_join_callback(scene: Scene, camera: Camera, msg):
   startCoords = (camera.data.position.x, camera.data.position.y, camera.data.position.z)
-  Globals.grids[validMacs[0]] = Grid(*spaceDimentions)
+  Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
   Globals.indicators[camera.object_id] = Indicator(camera, scene, grids=Globals.grids, startDevice=validMacs[0])
   return
 def end_program_callback(scene: Scene):
@@ -20,11 +20,12 @@ def end_program_callback(scene: Scene):
       grid.saveToFile(f"data-{address}.txt")
     ids = list(Globals.scene.all_objects.values())
     for obj in ids:
+      print("OOPS")
       print(obj)
       Globals.scene.delete_object(obj)
 
-spaceDimentions = (0.5, 0.5, 0.5)
-
+spaceDimensions = (0.5, 0.5, 0.5)
+spaceDimensions = (3, 3, 3)
 mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
   # dev_mac = "ec:2c:e2:a7:3a:af"
@@ -79,7 +80,7 @@ def processPacket(pkt):
   if not pkt.addr2 in Globals.grids:
     # if reading[2] < -40:
       # return
-    Globals.grids[pkt.addr2] = Grid(*spaceDimentions)
+    Globals.grids[pkt.addr2] = Grid(*spaceDimensions)
   Globals.grids[pkt.addr2].addReading(reading)
   # print(rotationToYRotation(reading[1]), reading[2])
   visualizePacket(pkt.addr2, pkt.addr1, Globals.macMarkers, Globals.scene)
@@ -125,9 +126,9 @@ def reloadGrid():
       marker = Box(
         object_id=f"{position}",
         position=position,
-        width=spaceDimentions[0]/ 10,
-        height=spaceDimentions[1] / 10,
-        depth=spaceDimentions[2] / 10,
+        width=spaceDimensions[0]/ 10,
+        height=spaceDimensions[1] / 10,
+        depth=spaceDimensions[2] / 10,
         material=Material(color=color),
         # persist=True#, opacity=1, transparent=True),
       )

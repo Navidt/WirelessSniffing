@@ -7,7 +7,9 @@ class GridSpace():
       readings = []
     self.center = center
     self.angleBinCount = angleBinCount
-    self.angleBins = [[]] * angleBinCount
+    self.angleBins = []
+    for i in range(angleBinCount):
+      self.angleBins.append([])
     self.angleAverages = [0] * angleBinCount
     self.angleTotals = [0] * angleBinCount
     self.readings = readings
@@ -17,12 +19,16 @@ class GridSpace():
       self.total += reading[2]
     if len(readings) > 0:
       self.average = self.total / len(readings)
+    else:
+      self.average = 0
   
   def addReading(self, reading):
     self.total += reading[2]
     self.readings.append(reading)
     angle = rotationToYRotation(reading[1])
     angleBin = int(angle / (2 * np.pi / self.angleBinCount))
+    # print(angleBin)
+    # print(list(map(lambda x: len(x), self.angleBins)))
     self.angleBins[angleBin].append(reading)
     self.angleTotals[angleBin] += reading[2]
     self.angleAverages[angleBin] = self.angleTotals[angleBin] / len(self.angleBins[angleBin])

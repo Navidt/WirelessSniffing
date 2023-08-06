@@ -6,26 +6,25 @@ class Indicator():
   def updateCircle(self):
     for i, angleBin in enumerate(self.currentSpace.angleBins):
       if len(angleBin) == 0:
-        color = (255, 0, 0)
+        color = Color(255, 0, 0)
       else:
-        color = (0, 255, 0)
+        color = Color(0, 255, 0)
       self.segmentMarkers[i].data.color = color
-      self.scene.update_object(circle)
+      self.scene.update_object(self.segmentMarkers[i])
   def update(self):
-    # print("hi")
     rotation = self.camera.data.rotation
     rot = R.from_quat((rotation.x, rotation.y, rotation.z, rotation.w))
     v = rot.apply((0, 0, -0.1))
     end = Position(v[0], -v[2], 0)
-    print(end)
     self.arrow.data.end = end
-    print(self.arrow)
     self.scene.update_object(self.arrow)
     cameraPosition = (self.camera.data.position.x, self.camera.data.position.y, self.camera.data.position.z)
     newSpace = self.grids[self.device].getSpaceForPosition(cameraPosition)
     if newSpace != self.currentSpace:
       cameraPosition = (self.camera.data.position.x, self.camera.data.position.y, self.camera.data.position.z)
-      self.currentSpace = self.grids[self.device].getSpaceFromCoords(cameraPosition)
+      self.currentSpace = self.grids[self.device].getSpaceForPosition(cameraPosition)
+      print("CHANGING SPACE")
+    self.updateCircle()
     
 
   def __init__(self, camera, scene, grids=None, startDevice=None):
@@ -34,9 +33,7 @@ class Indicator():
     self.device = startDevice
     self.scene = scene
     cameraPosition = (self.camera.data.position.x, self.camera.data.position.y, self.camera.data.position.z)
-    print("hi")
     self.currentSpace = self.grids[self.device].getSpaceForPosition(cameraPosition)
-    print("rsfr")
     self.centerCircle = Circle(
       position=(0, 0.4, -1),
       radius=0.02,
@@ -49,17 +46,15 @@ class Indicator():
       color=(0,255,0),
       parent=self.centerCircle.object_id
     )
-    print("hi1")
     scene.add_object(self.centerCircle)
     scene.add_object(self.arrow)
     self.segmentMarkers = []
-    print("hi")
     self.segments = len(self.currentSpace.angleBins)
     for i, angleBin in enumerate(self.currentSpace.angleBins):
       angle = np.pi * 2 / self.segments * i
-      position = (-0.2 * np.sin(angle), 0.15 * np.cos(angle), 0)
+      position = (0.15 * np.cos(angle), -0.15 * np.sin(angle), 0)
       if len(angleBin) == 0:
-        color = (0, 125, 125)
+        color = (255, 0, 0)
       else:
         color = (0, 255, 0)
       circle = Circle(
