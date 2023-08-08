@@ -124,4 +124,4 @@ class Indicator():
       self.segmentMarkers.append(circle)
       scene.add_object(circle)
     scene.run_forever(self.update, interval_ms=300)
-    scene.run_tasks()
+    # scene.run_tasks()

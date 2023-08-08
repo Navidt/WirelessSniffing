@@ -7,12 +7,15 @@ from arena_helpers import *
 from algoritms import *
 from grid import *
 from indicator import Indicator
+from interface import Interface
 import time
 
 def user_join_callback(scene: Scene, camera: Camera, msg):
   startCoords = (camera.data.position.x, camera.data.position.y, camera.data.position.z)
+  Globals.grids[validMacs[1]] = Grid(*spaceDimensions)
+  Globals.grids[validMacs[2]] = Grid(*spaceDimensions)
   Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
-  Globals.indicators[camera.object_id] = Indicator(camera, scene, grids=Globals.grids, startDevice=validMacs[0])
+  Globals.interfaces[camera.object_id] = Interface(camera, scene, Globals.grids)
   return
 def end_program_callback(scene: Scene):
     # print("cancelling")
@@ -24,7 +27,7 @@ def end_program_callback(scene: Scene):
       print(obj)
       Globals.scene.delete_object(obj)
 
-spaceDimensions = (0.5, 0.5, 1)
+spaceDimensions = (0.5, 1, 0.5)
 # spaceDimensions = (3, 3, 3)
 mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
@@ -34,14 +37,14 @@ mainUsername = "Navid"
 # dev_mac = "44:12:44:69:f4:62"
 iphone = "b8:7b:c5:00:6e:89"
 # dev_mac = "e4:5f:01:d3:40:c6"
-# validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
-validMacs = ["5c:e9:1e:88:71:b1"]
+validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
+# validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
 channel_n = 44  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of camera ids to indicators
-  indicators: dict[str: Indicator]
+  interfaces: dict[str: Indicator]
   #text in front of the user
   dynamicText: dict[str: Object]
   #dictionary of mac address text marking the device in the scene
@@ -153,7 +156,8 @@ def reloadEstimate(mac):
   if not mac in Globals.grids.keys():
     return
   grid = Globals.grids[mac]
-  # bestLocation = getEstimate(grid)
+  bestLocation = getEstimate(grid)
+  """
   result = newGetEstimate(grid)
   if result == None:
     return
@@ -168,16 +172,7 @@ def reloadEstimate(mac):
       color=Color(255, 0, 0),
       object_id=f"line{start[0]}"
     ))
-    # Globals.scene.add_object(Box(
-    #   position=(0, 1, 0),
-    #   color=Color(0, 0, 255),
-    #   scale=(0.1, 0.1, 0.1)
-    # ))
-    # Globals.scene.add_object(Box(
-    #   position=(1, 1, 0),
-    #   color=Color(255, 0, 255),
-    #   scale=(0.1, 0.1, 0.1)
-    # ))
+  """
   if not mac in Globals.macMarkers.keys():
     def callback(s, evt, msg):
       print("HEYOOOOOOO", mac)

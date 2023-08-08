@@ -10,7 +10,7 @@ def colorFlip(color):
 def difference(v1, v2):
   return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
 
-def makeBaseDoubleTapButton(obj, singleAction, doubleAction, scene):
+def makeBaseDoubleTapButton(obj, singleAction, doubleAction, scene: Scene):
   buttonSleepDelay = 0.3
   doubleTapThreshold = 800
   async def checkTaps(evt):

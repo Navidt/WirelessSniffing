@@ -88,7 +88,7 @@ def getSampleWeight(bins: list[list[Reading]]) -> float:
 
 def getEstimate(grid):
   bestSignal = -500
-  bestLocation = (0, 0)
+  bestLocation = (0, 0, 0)
   for space in grid.spaces.values():
     if space.average > bestSignal:
       bestSignal = space.average
