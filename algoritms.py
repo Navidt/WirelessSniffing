@@ -116,7 +116,7 @@ def newGetEstimate(grid):
       continue
     bestReading = getMaxReading(space)
     vector = R.from_quat(bestReading[1]).apply((0, 0, -1))
-    lines.append((space.center, vector))
+    lines.append((bestReading[0], scale(10, vector)))
     weights.append(weight)
   if len(lines) < 2:
     return None

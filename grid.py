@@ -14,6 +14,8 @@ class GridSpace():
     self.angleTotals = [0] * angleBinCount
     self.readings = readings
     self.total = 0
+    self.maxAverage = None
+    self.minAverage = None
     for reading in readings:
       # print(reading)
       self.total += reading[2]
@@ -32,6 +34,10 @@ class GridSpace():
     self.angleBins[angleBin].append(reading)
     self.angleTotals[angleBin] += reading[2]
     self.angleAverages[angleBin] = self.angleTotals[angleBin] / len(self.angleBins[angleBin])
+    if self.maxAverage == None or self.maxAverage < self.angleAverages[angleBin]:
+      self.maxAverage = self.angleAverages[angleBin]
+    if self.minAverage == None or self.minAverage > self.angleAverages[angleBin]:
+      self.minAverage = self.angleAverages[angleBin]
     self.average = self.total / len(self.readings)
   
   def serialize(self):
@@ -54,9 +60,9 @@ class Grid():
     xOffset = position[0] - self.origin[0]
     yOffset = position[1] - self.origin[1]
     zOffset = position[2] - self.origin[2]
-    spaceCoords = (int(xOffset / self.xWidth), int(yOffset / self.yWidth), int(zOffset / self.zWidth))
+    spaceCoords = (xOffset // self.xWidth, yOffset // self.yWidth, zOffset // self.zWidth)
     return spaceCoords
-  
+    
   def getSpaceForPosition(self, position):
     spaceCoords = self.getCoordsForPosition(position)
     if spaceCoords not in self.spaces.keys():
@@ -71,7 +77,7 @@ class Grid():
     centerX = (spaceCoords[0] + 0.5) * self.xWidth + self.origin[0]
     centerY = (spaceCoords[1] + 0.5) * self.yWidth + self.origin[1]
     centerZ = (spaceCoords[2] + 0.5) * self.zWidth + self.origin[2]
-    self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), 12)
+    self.spaces[spaceCoords] = GridSpace((centerX, centerY, centerZ), self.angleBinCount)
   
   def addReadings(self, readings):
     for reading in readings:

@@ -24,8 +24,8 @@ def end_program_callback(scene: Scene):
       print(obj)
       Globals.scene.delete_object(obj)
 
-spaceDimensions = (0.5, 0.5, 0.5)
-spaceDimensions = (3, 3, 3)
+spaceDimensions = (0.5, 0.5, 1)
+# spaceDimensions = (3, 3, 3)
 mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
   # dev_mac = "ec:2c:e2:a7:3a:af"
@@ -159,11 +159,25 @@ def reloadEstimate(mac):
     return
   bestLocation, lines = result
   for line in lines:
+    start = line[0]
+    end = add(line[0], line[1])
+    print("Start:", start, "End:", end)
     Globals.scene.add_object(Line(
-      start=line[0],
-      end=add(line[0], line[1]),
-      color=Color(255, 0, 0)
+      start=Position(start[0], start[1], start[2]),
+      end=Position(end[0], end[1], end[2]),
+      color=Color(255, 0, 0),
+      object_id=f"line{start[0]}"
     ))
+    # Globals.scene.add_object(Box(
+    #   position=(0, 1, 0),
+    #   color=Color(0, 0, 255),
+    #   scale=(0.1, 0.1, 0.1)
+    # ))
+    # Globals.scene.add_object(Box(
+    #   position=(1, 1, 0),
+    #   color=Color(255, 0, 255),
+    #   scale=(0.1, 0.1, 0.1)
+    # ))
   if not mac in Globals.macMarkers.keys():
     def callback(s, evt, msg):
       print("HEYOOOOOOO", mac)

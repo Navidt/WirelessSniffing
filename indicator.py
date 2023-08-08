@@ -6,6 +6,7 @@ class Indicator():
   def changeSpace(self, newSpace):
     self.currentSpace = newSpace
     center = newSpace.center
+    print("Center:", center, "Location:", self.camera.data.position)
     xOffset = self.grids[self.device].xWidth / 2
     yOffset = self.grids[self.device].yWidth / 2
     zOffset = self.grids[self.device].zWidth / 2
@@ -44,12 +45,20 @@ class Indicator():
     for line in self.spaceBoundaries:
       self.scene.update_object(line)
   def updateCircle(self):
+    maxAverage = self.currentSpace.maxAverage
+    minAverage = self.currentSpace.minAverage
     for i, angleBin in enumerate(self.currentSpace.angleBins):
       if len(angleBin) == 0:
         color = Color(255, 0, 0)
+        radius = 0.01
       else:
         color = Color(0, 255, 0)
+        if maxAverage == minAverage:
+          radius = 0.02
+        else:
+          radius = 0.02 + 0.04 * (self.currentSpace.angleAverages[i] - minAverage) / (maxAverage - minAverage)
       self.segmentMarkers[i].data.color = color
+      self.segmentMarkers[i].data.radius = radius
       self.scene.update_object(self.segmentMarkers[i])
   def update(self):
     rotation = self.camera.data.rotation
@@ -62,7 +71,6 @@ class Indicator():
     newSpace = self.grids[self.device].getSpaceForPosition(cameraPosition)
     if newSpace != self.currentSpace:
       self.changeSpace(newSpace)
-      print("CHANGED SPACE")
     self.updateCircle()
     
   def __init__(self, camera, scene, grids=None, startDevice=None):
@@ -105,7 +113,7 @@ class Indicator():
         color = (0, 255, 0)
       circle = Circle(
         position=position,
-        radius=0.02,
+        radius=0.01,
         color=color,
         parent=self.centerCircle.object_id
       )

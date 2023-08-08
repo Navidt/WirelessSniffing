@@ -9,33 +9,37 @@ def colorFlip(color):
 
 def difference(v1, v2):
   return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
+def makeBaseButton(obj, action, scene):
+  buttonSleepDelay = 0.5
+  def callback(s, evt, msg):
+    print(evt.type)
+    if evt.type == "mousedown":
+      t = time()
+      if (t - callback.lastTimePressed) < buttonSleepDelay:
+        return
+      callback.lastTimePressed = t
+      action(s, evt, msg)
+  callback.lastTimePressed = time()
+  scene.add_object(obj)
+  scene.update_object(obj, click_listener=True, evt_handler=callback)
+  print(obj)
+  return obj
 
 def makeButton(position, buttonColor, text, action, scene):
-    buttonSleepDelay = 0.5
-    def callback(s, evt, msg):
-        if evt.type == "mousedown":
-            t = time()
-            if (t - callback.lastTimePressed) < buttonSleepDelay:
-                return
-            callback.lastTimePressed = t
-            action(s, evt, msg)
-    callback.lastTimePressed = time()
-    button = Box(
-        object_id=f"Button{text}",
-        position=position,
-        width=0.15,
-        height=0.05,
-        depth=0.05,
-        color = Color(*buttonColor),
-        evt_handler=callback,
-        click_listener=True
-    )
-    print("New button made")
-    scene.add_object(button)
-    textColor = Color(*colorFlip(buttonColor))
-    text = Text(object_id=f"Text{text}", position=(0, 0, 0.03), scale=(0.1, 0.1, 0.1), value=text, color=textColor, parent=button.object_id)
-    scene.add_object(text)
-    return button
+  button = Box(
+    object_id=f"Button{text}",
+    position=position,
+    width=0.15,
+    height=0.05,
+    depth=0.05,
+    color = Color(*buttonColor),
+  )
+  print("New button made")
+  makeBaseButton(button, action, scene)
+  textColor = Color(*colorFlip(buttonColor))
+  text = Text(object_id=f"Text{text}", position=(0, 0, 0.03), scale=(0.1, 0.1, 0.1), value=text, color=textColor, parent=button.object_id)
+  scene.add_object(text)
+  return button
 
 def normalize(vector):
   magnitude = (vector[0]**2 + vector[1]**2 + vector[2]**2)**0.5
