@@ -9,17 +9,44 @@ def colorFlip(color):
 
 def difference(v1, v2):
   return (v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
-def makeBaseButton(obj, action, scene):
-  buttonSleepDelay = 0.5
+
+def makeBaseDoubleTapButton(obj, singleAction, doubleAction, scene):
+  buttonSleepDelay = 0.3
+  doubleTapThreshold = 800
+  async def checkTaps(evt):
+    await scene.sleep(doubleTapThreshold)
+    if callback.taps == 1:
+      singleAction()
+    elif callback.taps == 2:
+      doubleAction()
+    callback.taps = 0
   def callback(s, evt, msg):
-    print(evt.type)
+    if evt.type != "mousedown":
+      return
+    t = time()
+    if (t - callback.lastTimePressed) < buttonSleepDelay:
+      return
+    callback.lastTimePressed = t
+    callback.taps += 1
+    scene.event_loop.loop.create_task(checkTaps(evt))
+  callback.lastTimePressed = time()
+  callback.taps = 0
+  scene.add_object(obj)
+  scene.update_object(obj, click_listener=True, evt_handler=callback)
+  return obj
+
+def makeBaseButton(obj, action, scene):
+  buttonSleepDelay = 0.3
+  async def test():
+    print("HI")
+  def callback(s, evt, msg):
     if evt.type == "mousedown":
       t = time()
-      if (t - callback.lastTimePressed) < buttonSleepDelay:
+      if (t - makeBaseButton.lastTimePressed) < buttonSleepDelay:
         return
-      callback.lastTimePressed = t
+      makeBaseButton.lastTimePressed = t
       action(s, evt, msg)
-  callback.lastTimePressed = time()
+  makeBaseButton.lastTimePressed = time()
   scene.add_object(obj)
   scene.update_object(obj, click_listener=True, evt_handler=callback)
   print(obj)

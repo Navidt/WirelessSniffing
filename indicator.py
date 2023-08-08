@@ -3,6 +3,10 @@ from arena import *
 from algoritms import *
 from scipy.spatial.transform import Rotation as R
 class Indicator():
+  def changeDevice(self, newDevice):
+    self.device = newDevice
+    self.currentSpace = self.grids[self.device].getSpaceForPosition((self.camera.data.position.x, self.camera.data.position.y, self.camera.data.position.z))
+    self.updateCircle()
   def changeSpace(self, newSpace):
     self.currentSpace = newSpace
     center = newSpace.center
