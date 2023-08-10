@@ -2,6 +2,7 @@ from grid import *
 from arena import *
 from algoritms import *
 from scipy.spatial.transform import Rotation as R
+from arena_helpers import *
 class Indicator():
   def changeDevice(self, newDevice):
     self.device = newDevice
@@ -51,19 +52,27 @@ class Indicator():
   def updateCircle(self):
     maxAverage = self.currentSpace.maxAverage
     minAverage = self.currentSpace.minAverage
+    maxDifference = 0
+    maxMarkerIndex = None
     for i, angleBin in enumerate(self.currentSpace.angleBins):
       if len(angleBin) == 0:
         color = Color(255, 0, 0)
         radius = 0.01
       else:
-        color = Color(0, 255, 0)
+        color = Color(0, 0, 255)
+        difference = self.currentSpace.angleAverages[i] - minAverage
+        if difference > maxDifference:
+          maxDifference = difference
+          maxMarkerIndex = i
         if maxAverage == minAverage:
           radius = 0.02
         else:
-          radius = 0.02 + 0.04 * (self.currentSpace.angleAverages[i] - minAverage) / (maxAverage - minAverage)
+          radius = 0.02 + 0.04 * difference / (maxAverage - minAverage)
       self.segmentMarkers[i].data.color = color
       self.segmentMarkers[i].data.radius = radius
-      self.scene.update_object(self.segmentMarkers[i])
+    if maxMarkerIndex != None:
+      self.segmentMarkers[maxMarkerIndex].data.color = Color(0, 255, 0)
+    self.scene.update_objects(self.segmentMarkers)
   def update(self):
     rotation = self.camera.data.rotation
     rot = R.from_quat((rotation.x, rotation.y, rotation.z, rotation.w))
@@ -114,7 +123,7 @@ class Indicator():
       if len(angleBin) == 0:
         color = (255, 0, 0)
       else:
-        color = (0, 255, 0)
+        color = (0, 0, 255)
       circle = Circle(
         position=position,
         radius=0.01,
@@ -123,5 +132,6 @@ class Indicator():
       )
       self.segmentMarkers.append(circle)
       scene.add_object(circle)
-    scene.run_forever(self.update, interval_ms=300)
+    repeat_task(self.update, 300, scene)
+    # scene.run_forever(self.update, interval_ms=300)
     # scene.run_tasks()

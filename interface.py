@@ -55,4 +55,3 @@ class Interface:
       position=(0, -0.9, -1),
       scale=(0.1, 0.1, 0.1),
     )
-    scene.run_tasks()

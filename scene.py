@@ -11,9 +11,6 @@ from interface import Interface
 import time
 
 def user_join_callback(scene: Scene, camera: Camera, msg):
-  startCoords = (camera.data.position.x, camera.data.position.y, camera.data.position.z)
-  Globals.grids[validMacs[1]] = Grid(*spaceDimensions)
-  Globals.grids[validMacs[2]] = Grid(*spaceDimensions)
   Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
   Globals.interfaces[camera.object_id] = Interface(camera, scene, Globals.grids)
   return
@@ -44,9 +41,7 @@ channel_n = 44  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of camera ids to indicators
-  interfaces: dict[str: Indicator]
-  #text in front of the user
-  dynamicText: dict[str: Object]
+  interfaces: dict[str: Indicator] = {}
   #dictionary of mac address text marking the device in the scene
   macMarkers: dict[str: Object] = {}
   #dictionary of positions to the selected device's signal grid
@@ -55,8 +50,6 @@ class Globals():
   grids: dict[str: Grid] = {}
   selectedMac = None
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback, user_join_callback=user_join_callback)
-# Globals.selectedMac = dev_mac
-#Size of sphere should be proportional to number of packets
 
 
 packetsProcessed = 0

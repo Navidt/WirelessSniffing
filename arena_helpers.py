@@ -4,6 +4,7 @@ import math
 from typing import Tuple
 from scipy.spatial.transform import Rotation as R
 from grid import *
+import asyncio
 def colorFlip(color):
     return (255 - color[0], 255 - color[1], 255 - color[2])
 
@@ -143,9 +144,19 @@ def makePacketArrow(position, directionVector, color, ttl: float, text: str, sce
   scene.add_object(text)
   return secretParent
 
-
+def repeat_task(func, interval_ms, scene) -> asyncio.Task:
+  """Add a task to the event loop that repeats every `interval_ms` milliseconds. Pass a synchronous function to `func`."""
+  async def run():
+    while True:
+      start = time()
+      func()
+      end = time()
+      target_time = max(0, interval_ms - (end - start))
+      await scene.sleep(target_time)
+  return asyncio.create_task(run())
 
 def visualizePacket(originMac: str, destMac: str, macMarkers: dict[str: Grid], scene: Scene):
+  return
   #nextTimes is a dictionary from the mac address tuple to the next time a packet can be visualized
   #numberOfPackets is a dictionary from the mac address tuple to the number of packets that will be visualized
   if not originMac in macMarkers.keys() or not destMac in macMarkers.keys():
