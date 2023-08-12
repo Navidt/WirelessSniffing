@@ -32,26 +32,32 @@ class Interface:
       parent=camera.object_id,
       material=Material(color=(255, 0, 0), opacity=0.0, transparent=True),
     )
-    self.invisibleWrapper = Circle(
-      material=Material(color=(255, 0, 0), opacity=0.0, transparent=True),
+    self.button = Circle(
+      color=(255, 0, 0),
       parent=self.shell.object_id,
       position=(0, 0, -1),
-      radius=0.3
+      radius=0.1
     )
     print("h1")
     self.scene.add_object(self.shell)
-    self.scene.add_object(self.invisibleWrapper)
+    # self.scene.add_object(self.invisibleWrapper)
     print("h2")
-    self.button = Circle(
-      color=(255, 0, 0),
-      parent=self.invisibleWrapper.object_id,
-      position=(0, -0.7, -1),
-      radius=0.2
-    )
+    # self.button = Circle(
+      # color=(255, 0, 0),
+      # parent=self.invisibleWrapper.object_id,
+      # position=(0, -0.7, -1),
+      # radius=0.2
+    # )
     makeBaseDoubleTapButton(self.button, self.goForward, self.goBackward, scene)
     self.macText = Text(
       text=self.selectedDevice,
       parent=self.shell.object_id,
-      position=(0, -0.9, -1),
-      scale=(0.1, 0.1, 0.1),
+      position=(0, -0.55, -1),
+      scale=(0.2, 0.2, 0.2),
     )
+    self.scene.add_object(self.macText)
+  def scrub(self):
+    self.indicator.scrub()
+  def __del__(self):
+    print("Deleting boundari")
+    # del self.indicator

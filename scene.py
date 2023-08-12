@@ -9,30 +9,30 @@ from grid import *
 from indicator import Indicator
 from interface import Interface
 import time
+import gc
+def user_left_callback(scene, camera: Camera, msg):
+  print(camera.object_id, "left")
+  Globals.interfaces[camera.object_id].scrub()
+  del Globals.interfaces[camera.object_id]
 
 def user_join_callback(scene: Scene, camera: Camera, msg):
-  Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
   Globals.interfaces[camera.object_id] = Interface(camera, scene, Globals.grids)
   return
+
 def end_program_callback(scene: Scene):
     # print("cancelling")
-    for address, grid in Globals.grids.items():
-      grid.saveToFile(f"data-{address}.txt")
+    # for address, grid in Globals.grids.items():
+    #   grid.saveToFile(f"data-{address}.txt")
     ids = list(Globals.scene.all_objects.values())
     for obj in ids:
       print("OOPS")
       print(obj)
       Globals.scene.delete_object(obj)
+    return
 
 spaceDimensions = (0.5, 1, 0.5)
-# spaceDimensions = (3, 3, 3)
 mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
-  # dev_mac = "ec:2c:e2:a7:3a:af"
-  # dev_mac = "7e:7d:e4:76:27:fc"
-# dev_mac = "b4:b0:24:17:d1:7e"
-# dev_mac = "44:12:44:69:f4:62"
-iphone = "b8:7b:c5:00:6e:89"
 # dev_mac = "e4:5f:01:d3:40:c6"
 validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
 # validMacs = ["5c:e9:1e:88:71:b1"]
@@ -49,8 +49,8 @@ class Globals():
   #dictionary of all rssi readings, mapping the mac address of the grid of the readings 
   grids: dict[str: Grid] = {}
   selectedMac = None
-  scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback, user_join_callback=user_join_callback)
-
+  scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback, user_join_callback=user_join_callback, user_left_callback=user_left_callback)
+Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
 
 packetsProcessed = 0
 def processPacket(pkt):

@@ -131,7 +131,16 @@ class Indicator():
         parent=self.centerCircle.object_id
       )
       self.segmentMarkers.append(circle)
-      scene.add_object(circle)
-    repeat_task(self.update, 300, scene)
-    # scene.run_forever(self.update, interval_ms=300)
-    # scene.run_tasks()
+    scene.add_objects(self.segmentMarkers)
+    self.loopedTask = repeat_task(self.update, 300, scene)
+  def scrub(self):
+    for boundary in self.spaceBoundaries:
+      print("Boundary:", boundary.object_id)
+      self.scene.delete_object(boundary)
+    self.loopedTask.cancel()
+  def __del__(self):
+    # for boundary in self.spaceBoundaries:
+    #   print("Boundary:", boundary.object_id)
+    #   self.scene.delete_object(boundary)
+    # self.loopedTask.cancel()
+    return
