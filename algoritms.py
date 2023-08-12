@@ -90,10 +90,11 @@ def getEstimate(grid):
   bestSignal = -500
   bestLocation = (0, 0, 0)
   for space in grid.spaces.values():
+    if len(space.readings) < 10:
+      continue
     if space.average > bestSignal:
       bestSignal = space.average
       bestLocation = space.center
-  print(bestLocation, bestSignal)
   return bestLocation
 
 def getMaxReading(space):

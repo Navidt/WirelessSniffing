@@ -29,7 +29,7 @@ def makeBaseDoubleTapButton(obj, singleAction, doubleAction, scene: Scene):
       return
     callback.lastTimePressed = t
     callback.taps += 1
-    scene.event_loop.loop.create_task(checkTaps(evt))
+    asyncio.create_task(checkTaps(evt))
   callback.lastTimePressed = time()
   callback.taps = 0
   scene.add_object(obj)
@@ -38,8 +38,6 @@ def makeBaseDoubleTapButton(obj, singleAction, doubleAction, scene: Scene):
 
 def makeBaseButton(obj, action, scene):
   buttonSleepDelay = 0.3
-  async def test():
-    print("HI")
   def callback(s, evt, msg):
     if evt.type == "mousedown":
       t = time()

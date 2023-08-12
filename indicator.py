@@ -50,8 +50,11 @@ class Indicator():
     for line in self.spaceBoundaries:
       self.scene.update_object(line)
   def updateCircle(self):
-    maxAverage = self.currentSpace.maxAverage
-    minAverage = self.currentSpace.minAverage
+    maxAverage = self.grids[self.device].maxAverage
+    minAverage = self.grids[self.device].minAverage
+    if maxAverage == minAverage:
+      maxAverage = self.currentSpace.maxAverage
+      minAverage = self.currentSpace.minAverage
     maxDifference = 0
     maxMarkerIndex = None
     for i, angleBin in enumerate(self.currentSpace.angleBins):
