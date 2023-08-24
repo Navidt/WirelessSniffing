@@ -58,7 +58,6 @@ def solveLines(lines: list[Tuple[Vector, Vector]], weights: list[float] = None):
 
 #number of consevituve unsampled regions
 def getUnsampledRegions(bins: list[list]) -> float:
-  
   #find the greatest consecutive zero region assuming the list is circular
   maxRegion = 0
   currentBin = 0

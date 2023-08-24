@@ -86,11 +86,39 @@ def rotationFromVector(vector):
   magnitude = (a[0]**2 + a[1]**2 + a[2]**2 + w**2)**0.5
   return (a[0] / magnitude, a[1] / magnitude, a[2] / magnitude, w / magnitude)
 
+def makeSpaceArrow(tailPosition, directionVector, color, scene, persist=False):
+  arrowHeight = 0.1
+  arrowTipHeight = 0.02
+  normalizedDirectionVector = normalize(directionVector)
+  tipRotation = rotationFromVector(normalizedDirectionVector)
+  tipPosition = add(tailPosition, scale(arrowHeight + arrowTipHeight, normalizedDirectionVector))
+  #shaft position wrt tip position
+  shaftPosition = (0, (arrowHeight + arrowTipHeight) * -0.5, 0)
+  arrowTip = Cone(
+    position = tipPosition,
+    material = Material(color=color),
+    rotation = tipRotation,
+    height = arrowTipHeight,
+    radiusTop = 0,
+    radiusBottom = arrowTipHeight,
+  )
+  arrowShaft = Cylinder(
+    position = shaftPosition,
+    material = Material(color=color),
+    radius=0.01,
+    height=arrowHeight,
+    parent=arrowTip.object_id
+  )
+  scene.add_object(arrowTip)
+  scene.add_object(arrowShaft)
+  return arrowTip
+
 def makePacketArrow(position, directionVector, color, ttl: float, text: str, scene: Scene, persist=False):
   textRotation = alignTextWithVector(directionVector)
   rotation = rotationFromVector(directionVector)
   secretParent = Entity(
     position = position,
+    persist=persist,
     ttl=ttl,
     scale=(0.5, 0.5, 0.5)
   )
