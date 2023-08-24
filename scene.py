@@ -1,15 +1,12 @@
 from arena import *
-import numpy as np
 from typing import Tuple
 from scapy.all import AsyncSniffer, Dot11, ls, Raw, IP, TCP, getmacbyip
-import subprocess, shlex
+from raspberrypi_helpers import *
 from arena_helpers import *
 from algoritms import *
 from grid import *
 from indicator import Indicator
 from interface import Interface
-import time
-import gc
 def user_left_callback(scene, camera: Camera, msg):
   print(camera.object_id, "left")
   Globals.interfaces[camera.object_id].scrub()
@@ -35,9 +32,10 @@ mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
 # dev_mac = "e4:5f:01:d3:40:c6"
 validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
+validMacs = ["e4:5f:01:d3:40:c6"]
 # validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
-channel_n = 44  # Channel to listen on
+channel_n = 128  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of camera ids to indicators
@@ -46,6 +44,8 @@ class Globals():
   macMarkers: dict[str: Object] = {}
   #dictionary of positions to the selected device's signal grid
   spaceMarkers: dict[Vector: Object] = {}
+  #dictionary of positions to the selected device's direction markers
+  spaceArrows: dict[Vector: Object] = {}
   #dictionary of all rssi readings, mapping the mac address of the grid of the readings 
   grids: dict[str: Grid] = {}
   selectedMac = None
@@ -134,6 +134,12 @@ def reloadGrid():
       marker = Globals.spaceMarkers[position]
       marker.data.material.color = color
       Globals.scene.update_object(marker)
+    if getUnsampledRegions(space.angleBins) < 3:
+      if position in Globals.spaceArrows.keys():
+        Globals.scene.delete_object(Globals.spaceArrows[position])
+        del Globals.spaceArrows[position]
+      angle = space.angleFromBin(space.maxBin)
+      Globals.spaceArrows[position] = makeSpaceArrow(position, (np.cos(angle), 0, np.sin(angle)), color, Globals.scene)
   return
 
 async def changeSelectedMac(newMac: str):
@@ -177,12 +183,7 @@ def reloadEstimate(mac):
     Globals.macMarkers[mac].data.position = Position(bestLocation[0], bestLocation[1], bestLocation[2])
     Globals.scene.update_object(Globals.macMarkers[mac])
   # reloadGrid()
-def changeChannel(channel_num):
-  """Change the channel network adapter listens on"""
-  print("Changing to Channel ", str(channel_num))
-  command = "sudo iwconfig wlan1 channel " + str(channel_num)
-  command = shlex.split(command)
-  subprocess.Popen(command, shell=False)
+
 
 allChannels = [11, 108]
 channelIndex = 0
@@ -191,13 +192,14 @@ def channelHop():
   channelIndex = (channelIndex + 1) % len(allChannels)
   changeChannel(allChannels[channelIndex])
 
-@Globals.scene.run_after_interval(interval_ms=10)
+@Globals.scene.run_after_interval(interval_ms=10000)
 def start():
   print("Starting")
+  t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)
+  t.daemon = True
+  t.start()
   # Globals.scene.run_forever(reloadEstimates, 5000)
 
 changeChannel(channel_n)
-t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)
-t.daemon = True
-t.start()
+
 Globals.scene.run_tasks()
