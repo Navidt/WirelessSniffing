@@ -32,10 +32,11 @@ mainUsername = "Navid"
 # dev_mac = "5c:e9:1e:88:71:b1"  # RPi security camera MAC address
 # dev_mac = "e4:5f:01:d3:40:c6"
 validMacs = ["44:a5:6e:a1:32:fa", "e4:5f:01:d3:40:c6", "5c:e9:1e:88:71:b1"]
-validMacs = ["e4:5f:01:d3:40:c6"]
+validMacs = ["e4:5f:01:d3:40:c6", "7a:9d:dc:82:de:53"]
+# validMacs = ["7a:9d:dc:82:de:53"]
 # validMacs = ["5c:e9:1e:88:71:b1"]
 # dev_mac = "44:a5:6e:a1:32:fa"
-channel_n = 128  # Channel to listen on
+channel_n = 153  # Channel to listen on
 iface_n = "wlan1"  # Interface for network adapter
 class Globals():
   #dictionary of camera ids to indicators
@@ -48,6 +49,8 @@ class Globals():
   spaceArrows: dict[Vector: Object] = {}
   #dictionary of all rssi readings, mapping the mac address of the grid of the readings 
   grids: dict[str: Grid] = {}
+  #dictionary of all mac addresses to the best channel to listen on
+  channels: dict[str: int] = {}
   selectedMac = None
   scene = Scene(host='arenaxr.org', scene='packet_sniffer2', end_program_callback=end_program_callback, user_join_callback=user_join_callback, user_left_callback=user_left_callback)
 Globals.grids[validMacs[0]] = Grid(*spaceDimensions)
@@ -59,6 +62,7 @@ def processPacket(pkt):
     return
   if pkt.addr2 == None:
     return
+  # print(pkt.addr2)
   if pkt.addr2 not in validMacs:
     return
   user = None
@@ -70,7 +74,7 @@ def processPacket(pkt):
      return
   packetsProcessed += 1
   if packetsProcessed == 50:
-    print("P")
+    print("P", pkt.addr2)
     packetsProcessed = 0
   reading = ((user.data.position.x, user.data.position.y - 0.1, user.data.position.z), (user.data.rotation.x, user.data.rotation.y, user.data.rotation.z, user.data.rotation.w), pkt.dBm_AntSignal)
   if not pkt.addr2 in Globals.grids:
@@ -94,7 +98,7 @@ def getColor(min, max, signal):
     ratio = 0.5
   else:
     ratio = (signal - min) / (max - min)
-  return Color(int(255*(1 - ratio)), int(255*ratio), 0)
+  return (int(255*(1 - ratio)), int(255*ratio), 0)
 
 def clearGrid(mac: str):
   for obj in Globals.spaceMarkers.values():
@@ -106,6 +110,7 @@ def clearGrid(mac: str):
   Globals.scene.update_object(Globals.macMarkers[mac])
   return
 
+@Globals.scene.run_forever(interval_ms=10000)
 def reloadGrid():
   global Globals
   if Globals.selectedMac == None:
@@ -122,9 +127,9 @@ def reloadGrid():
       marker = Box(
         object_id=f"{position}",
         position=position,
-        width=spaceDimensions[0]/ 10,
-        height=spaceDimensions[1] / 10,
-        depth=spaceDimensions[2] / 10,
+        width=spaceDimensions[0]/ 20,
+        height=spaceDimensions[1] / 20,
+        depth=spaceDimensions[2] / 20,
         material=Material(color=color),
         # persist=True#, opacity=1, transparent=True),
       )
@@ -139,7 +144,7 @@ def reloadGrid():
         Globals.scene.delete_object(Globals.spaceArrows[position])
         del Globals.spaceArrows[position]
       angle = space.angleFromBin(space.maxBin)
-      Globals.spaceArrows[position] = makeSpaceArrow(position, (np.cos(angle), 0, np.sin(angle)), color, Globals.scene)
+      Globals.spaceArrows[position] = makeSpaceArrow(position, (np.cos(angle), 0, np.sin(angle)), (0, 255, 0), Globals.scene)
   return
 
 async def changeSelectedMac(newMac: str):
@@ -192,7 +197,7 @@ def channelHop():
   channelIndex = (channelIndex + 1) % len(allChannels)
   changeChannel(allChannels[channelIndex])
 
-@Globals.scene.run_after_interval(interval_ms=10000)
+@Globals.scene.run_after_interval(interval_ms=3000)
 def start():
   print("Starting")
   t = AsyncSniffer(iface=iface_n, prn=processPacket, store=0)

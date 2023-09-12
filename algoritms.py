@@ -83,7 +83,11 @@ def getUnsampledRegions(bins: list[list]) -> float:
 def getSampleWeight(bins: list[list[Reading]]) -> float:
   unsamlpedRegions = getUnsampledRegions(bins)
   #My thinking is if the max unsampled regions is halved, then the weight should quadruple since reductions in unsampled regions become more and more difficult
-  return max(1 - (unsamlpedRegions / 4)**2, 0)
+  # return max(1 - (unsamlpedRegions / 3)**2, 0)
+  if unsamlpedRegions < 3:
+    return 1
+  else:
+    return 0
 
 def getEstimate(grid):
   bestSignal = -500

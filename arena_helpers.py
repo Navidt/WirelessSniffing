@@ -113,6 +113,7 @@ def makeSpaceArrow(tailPosition, directionVector, color, scene, persist=False):
   scene.add_object(arrowShaft)
   return arrowTip
 
+
 def makePacketArrow(position, directionVector, color, ttl: float, text: str, scene: Scene, persist=False):
   textRotation = alignTextWithVector(directionVector)
   rotation = rotationFromVector(directionVector)
